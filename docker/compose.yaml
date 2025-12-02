@@ -1,0 +1,31 @@
+﻿services:
+  chat-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.Server
+      args:
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
+    image: chat-server:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      CHAT_SERVER_MESSAGE_PERIOD_SECONDS: ${CHAT_SERVER_MESSAGE_PERIOD_SECONDS:-60}
+    ports:
+      - "${CHAT_SERVER_PORT:-5000}:5000"
+    restart: unless-stopped
+
+  chat-client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.Client
+      args:
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
+    image: chat-client:local
+    environment:
+      CHAT_SERVER_URL: ${CHAT_SERVER_URL:-http://chat-server:5000}
+    depends_on:
+      chat-server:
+        condition: service_started
+    stdin_open: true
+    tty: true
+    profiles:
+      - client
